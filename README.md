@@ -5,6 +5,8 @@ Authors: Prabhu Narsina
 
 <b>summary</b>: Online chess has become prevalent with all young kids and most adults playing more during the last 18 months as we all sat at home with the COVID situation. However, there are a good number of players who prefer to play on a physical chess board. Online chess brings in a number of advantages like opening up to play anyone in the world and any time of the day. I believe we can provide the same online benefits to the players who prefer to play on a physical chess board.I here bring in the simple concept of digitizing a chess board using object identification and identifying / generating a legal move based on Reinforcement Learning. The digitization of the chess board involves three parts, 1) Chess board  2) Chess pieces identification 3) find the cell position for each chess piece. In the past, there have been efforts to identify chess pieces and translate them into a digital representation using the Canny edges, Hough transformation for finding lines and calculating intersection points. One of the techniques used to find chess piece type is to use cell piece location, extract image part for each cell and use Image classification technique (using CNNs).  I used a unique approach to solve the problem of finding a Chess board here, i.e use the same object identification technique for chess board by labelling for two different classes for inboard and outboard.
 
+This application uses Yolov5, Pytorch for deep Learning (DQN) and Open AI Gym pacakge for game environment.
+
 <b>Directory Structure</b>:    
   
     docker Folder:  
@@ -117,6 +119,15 @@ Authors: Prabhu Narsina
     note: Images are not provided in this git folder. 
 
 
+
+For more details about Yolo, please refer to the below link  
+https://github.com/ultralytics/yolov5  
+
+For more details about Pytorch DQN, please refer to the below link  
+https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html  
+
+For more details about Open AI Gym package, please refer to the below link  
+https://github.com/openai/gym  
 
 
 
