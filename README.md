@@ -37,72 +37,75 @@ Authors: Prabhu Narsina
       Most of the python files in the main folder have notebook version to test and troubleshoot in this folder. This folder also have other things tried like vgg16,  
       training with RL with Keras.  This also have tools files that used to copy and split the folders for train & test.
      
-    logs
-      log out put from NX_Logger (didn't check into github)
-Scripts used on AWS to setup for Docker networking on AWS machine
-docker network create --driver bridge hw03
+   
+<b>Dcoker/kube scripts</b>:    
+  
+    docker build -t w251_aws_mqtt_broker -f docker/Dockerfile_mqtt_base_aws .  
+    docker build -t chess_rienf -f docker/docker_chess_reinf_aws .  
+    docker build -t chess-yolo -f docker/Dockerfile_yolov5_chess .  
+    docker build -t chess-live -f docker/Docker_chess_camera .  
+    docker run -it --rm --net=host --ipc=host --runtime nvidia -e DISPLAY=$DISPLAY -v /home/prabhu/w251/chess_project:/chess chess_yolo  
 
-docker build -t pnarsina1/w251_aws_mqtt_broker -f docker/Dockerfile_mqtt_base_aws .
-docker build -t pnarsina1/w251_aws_hw3_save -f docker/Dockerfile_aws_save .
+    kubectl apply -f kube/chess_final.yaml  
+    To log into the kubernetes based container  
+    kubectl exec --stdin --tty <container> -- /bin/bash  
+    
+    --Troubleshooting Kubernetes deployment  
+    If deployment has more than one container  
+    kubectl exec -i -t my-pod --container main-app -- /bin/bash  
 
-docker run --name mosquitto --rm --network hw03 -p 1883:1883 pnarsina1/w251_aws_mqtt_broker
-docker run --name aws_save --rm --network hw03 -v /home/ubuntu/s3fs:/s3fs pnarsina1/w251_aws_hw3_save
+    Getting all the contaners in kube deployment  
+    kubectl get pods --all-namespaces -o=jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{range .spec.containers[*]}{.name}{", "}{end}{end}' |sort  
+    kubectl delete deployment chess-w251-final  
+    kubectl delete service mosquitto-service  
+    kubectl describe service mosquitto-service  
+    kubectl port-forward service/mosquitto-service 1883:1883  
+ 
+    kubectl get pods --show-labels  
 
-Scripts used to build, deploy and troubleshoot containers and Kubernetes
-#Deployment on Jetson NX device
+    #For Kubernetes with K8Micro
+    microk8s kubectl create -f kube/hw3_aws.yaml
 
-docker build -t pnarsina1/w251_nx_face_capture -f docker/Dockerfile_cv_face .
-docker build -t pnarsina1/w251_nx_mqtt_broker -f docker/Dockerfile_mqtt_nx_broker .
-docker build -t pnarsina1/w251_nx_msg_forward -f docker/Dockerfile_forward .
-docker build -t pnarsina1/w251_nx_logger -f docker/Dockerfile_nx_logger .
+    #For troubleshooting
+    kubectl logs podname containername
+    kubectl describe podname
+    use -v option with mosquitto broker
 
-docker push pnarsina1/w251_nx_face_capture
-docker push pnarsina1/w251_nx_mqtt_broker
-docker push pnarsina1/w251_nx_msg_forward
-docker push pnarsina1/w251_nx_logger
+    #For deleting deployment
+    kubectl delete deployment
 
-#For all Kubernetes deployment on JETSON device
-kubectl create -f kube/hw3_k3s_nx.yaml
-kubectl delete -f kube/hw3_k3s_nx.yaml
+    #For deleting service
+    kubectl delete service
 
-#For AWS machine
-docker build -t pnarsina1/w251_aws_mqtt_broker -f docker/Dockerfile_mqtt_base_aws .
-docker build -t pnarsina1/w251_aws_hw3_save -f docker/Dockerfile_aws_save .
+    #For testing through mosquitto client cli
+    mosquitto_pub -h mosquitto-service -p 1883 -t w251/face/capture -m "test from command prompt"
 
-#For Kubernetes with K8Micro
-microk8s kubectl create -f kube/hw3_aws.yaml
+    #cleaning docker repository
+    docker rm $(docker ps -a -q)
+    docker rmi $(docker images -q)
+    docker system prune
 
-#For troubleshooting
-kubectl logs podname containername
-kubectl describe podname
-use -v option with mosquitto broker
+    s3fs setup on AWS machine
+    sudo apt install s3fs
 
-#For deleting deployment
-kubectl delete deployment
+    Enter your credentials in a file ${HOME}/.passwd-s3fs and set owner-only permissions:
+    echo ACCESS_KEY_ID:SECRET_ACCESS_KEY > ${HOME}/.passwd-s3fs
+    chmod 600 ${HOME}/.passwd-s3fs
+    s3fs facesnxcapture ${HOME}/s3fs -o passwd_file=${HOME}/.passwd-s3fs
 
-#For deleting service
-kubectl delete service
+Linux commands used for troubleshooting  
+    top ps -ef | grep python  
+    ps -ef | grep mosquitto  
+    sudo kill -9  
+    netstat -tulpn | grep 1883  
+    #for deleting old logs  
+    sudo find /var/log -mtime +3 -type f -delete  
 
-#For testing through mosquitto client cli
-mosquitto_pub -h mosquitto-service -p 1883 -t w251/face/capture -m "test from command prompt"
 
-#cleaning docker repository
-docker rm $(docker ps -a -q)
-docker rmi $(docker images -q)
-docker system prune
 
-s3fs setup on AWS machine
-sudo apt install s3fs
 
-Enter your credentials in a file ${HOME}/.passwd-s3fs and set owner-only permissions:
-echo ACCESS_KEY_ID:SECRET_ACCESS_KEY > ${HOME}/.passwd-s3fs
-chmod 600 ${HOME}/.passwd-s3fs
-s3fs facesnxcapture ${HOME}/s3fs -o passwd_file=${HOME}/.passwd-s3fs
 
-Linux commands used for troubleshooting
-top ps -ef | grep python
-ps -ef | grep mosquitto
-sudo kill -9
-netstat -tulpn | grep 1883
-#for deleting old logs
-sudo find /var/log -mtime +3 -type f -delete
+
+
+
+
