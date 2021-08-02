@@ -26,6 +26,7 @@ This application uses Yolov5, Pytorch for deep Learning (DQN) and Open AI Gym pa
      2. chess_board_detect_api.py - subscribe to MQTT for topic published by readFromCamera.py and integrates with Yolo Model and RL model. This also forward the images to AWS to save and used for further tuning of the model. This will be enhanced to save the results of object detection and Reinforced learning.
      3. detect_chess.py - takes in the frame and sends it to trained yolo model for Chess board and pieces identification and returns FEN notation of Chessboard
      4. rl_model_generate_legalMoves.py - takes in board with chess pieces and generates requested number of legal moves. It returns id of next action, which can be converted using chess environment defined in gym_chess_env.py
+     5. data/data_capture.py - used for capturing chess board images and saving them onto the local folder.
              
      On AWS VM 
      1. msg_aws_save.py - Subscribe to MQTT broker on AWS machine and save the chess board images S3 bucket.
