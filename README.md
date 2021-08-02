@@ -38,7 +38,7 @@ Authors: Prabhu Narsina
       training with RL with Keras.  This also have tools files that used to copy and split the folders for train & test.
      
    
-<b>Dcoker/kube scripts</b>:    
+<b>Docker/kube scripts</b>:    
   
     docker build -t w251_aws_mqtt_broker -f docker/Dockerfile_mqtt_base_aws .  
     docker build -t chess_rienf -f docker/docker_chess_reinf_aws .  
@@ -106,12 +106,15 @@ Authors: Prabhu Narsina
     --For mounting block device to aws ec2
     lsblk (find the one that is not attached)
     sudo mount <unattached disk from above step> <folder that you want to attach to>
+   
+  <b>Yolo training/testing script</b>:   
     
-<b></b>:  
-      
      
-    
+    python train.py --img 640 --batch 8 --epochs 50 --data ../chess_project/tiny.yaml --weights yolov5s.pt
+ 
+    python detect.py --weights=runs/train/exp13/weights/best.pt --source=../chess_project/tripodimages
 
+    note: Images are not provided in this git folder. 
 
 
 
