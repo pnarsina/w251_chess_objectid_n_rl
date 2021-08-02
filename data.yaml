@@ -1,0 +1,5 @@
+train: ../chess_project/data/train/images
+val: ../chess_project/data/test/images
+
+nc: 13
+names: [ 'black-bishop', 'black-king', 'black-knight', 'black-pawn', 'black-queen', 'black-rook', 'Empty', 'white-bishop', 'white-king', 'white-knight', 'white-pawn', 'white-queen', 'white-rook']

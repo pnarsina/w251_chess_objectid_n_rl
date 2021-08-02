@@ -1,0 +1,5 @@
+train: ../chess_project/data/inboard/images
+val: ../chess_project/data/inboard/images
+
+nc: 15
+names: ['black-bishop', 'black-king', 'black-knight', 'black-pawn', 'black-queen', 'black-rook', 'empty', 'white-bishop', 'white-king', 'white-knight', 'white-pawn', 'white-queen', 'white-rook','board', 'inboard']
