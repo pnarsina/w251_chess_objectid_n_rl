@@ -1,7 +1,10 @@
-### Chess board and piece Identification and Legal move generation using Reinforcement Learning
-This is for Berkeley's MIDS program - course w251 - Final Project.
+## Chess board and piece Identification and Legal move generation using Reinforcement Learning
+#### This is for Berkeley's MIDS program - course w251 - Final Project.
 
 Authors: Prabhu Narsina
+
+<b>summary</b>: Online chess has become prevalent with all young kids and most adults playing more during the last 18 months as we all sat at home with the COVID situation. However, there are a good number of players who prefer to play on a physical chess board. Online chess brings in a number of advantages like opening up to play anyone in the world and any time of the day. I believe we can provide the same online benefits to the players who prefer to play on a physical chess board.I here bring in the simple concept of digitizing a chess board using object identification and identifying / generating a legal move based on Reinforcement Learning. The digitization of the chess board involves three parts, 1) Chess board  2) Chess pieces identification 3) find the cell position for each chess piece. In the past, there have been efforts to identify chess pieces and translate them into a digital representation using the Canny edges, Hough transformation for finding lines and calculating intersection points. One of the techniques used to find chess piece type is to use cell piece location, extract image part for each cell and use Image classification technique (using CNNs).  I used a unique approach to solve the problem of finding a Chess board here, i.e use the same object identification technique for chess board by labelling for two different classes for inboard and outboard.
+
 Directory Structure:
     docker Folder:
     1 Docker files to create containers for Jetson NX device 
