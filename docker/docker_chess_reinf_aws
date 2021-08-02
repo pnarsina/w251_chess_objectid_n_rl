@@ -1,0 +1,22 @@
+# ARG BASE_IMAGE=nvcr.io/nvidia/jetson-voice:r32.4.2
+ARG BASE_IMAGE=tensorflow/tensorflow:latest-gpu
+
+FROM ${BASE_IMAGE} 
+
+RUN apt update && apt install -y swig ffmpeg
+WORKDIR /tmp
+RUN pip3 install gym
+RUN pip3 install jupyter
+
+#WORKDIR /tmp/videos
+
+RUN mkdir /tmp/videos
+
+COPY *.py  ./
+
+# RUN mkdir /tmp/videos
+# ENV NVIDIA_VISIBLE_DEVICES 0
+# ENV CUDA_VISIBLE_DEVICES 0
+
+#CMD ["python3", "agent_chess_legal_move.py"]
+
