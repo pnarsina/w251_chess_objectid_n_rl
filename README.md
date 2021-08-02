@@ -93,13 +93,24 @@ Authors: Prabhu Narsina
     chmod 600 ${HOME}/.passwd-s3fs
     s3fs facesnxcapture ${HOME}/s3fs -o passwd_file=${HOME}/.passwd-s3fs
 
-Linux commands used for troubleshooting  
+<b>Linux troubleshooting scripts</b>:    
+  
     top ps -ef | grep python  
-    ps -ef | grep mosquitto  
+    ps -ef | grep mosquitto   
+    docker build -t chess-yolo -f docker/Dockerfile_yolov5_chess .
     sudo kill -9  
     netstat -tulpn | grep 1883  
     #for deleting old logs  
     sudo find /var/log -mtime +3 -type f -delete  
+    
+    --For mounting block device to aws ec2
+    lsblk (find the one that is not attached)
+    sudo mount <unattached disk from above step> <folder that you want to attach to>
+    
+<b></b>:  
+      
+     
+    
 
 
 
