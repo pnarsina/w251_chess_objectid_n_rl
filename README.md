@@ -5,23 +5,25 @@ Authors: Prabhu Narsina
 
 <b>summary</b>: Online chess has become prevalent with all young kids and most adults playing more during the last 18 months as we all sat at home with the COVID situation. However, there are a good number of players who prefer to play on a physical chess board. Online chess brings in a number of advantages like opening up to play anyone in the world and any time of the day. I believe we can provide the same online benefits to the players who prefer to play on a physical chess board.I here bring in the simple concept of digitizing a chess board using object identification and identifying / generating a legal move based on Reinforcement Learning. The digitization of the chess board involves three parts, 1) Chess board  2) Chess pieces identification 3) find the cell position for each chess piece. In the past, there have been efforts to identify chess pieces and translate them into a digital representation using the Canny edges, Hough transformation for finding lines and calculating intersection points. One of the techniques used to find chess piece type is to use cell piece location, extract image part for each cell and use Image classification technique (using CNNs).  I used a unique approach to solve the problem of finding a Chess board here, i.e use the same object identification technique for chess board by labelling for two different classes for inboard and outboard.
 
-Directory Structure:
-    docker Folder:
+<b>Directory Structure</b>:    
+    docker Folder:  
     1 Docker files to create containers for Jetson NX device 
-      (Dockerfile_cv_face, Dockerfile_mqtt_nx_broker, Dockerfile_forward,  Dockerfile_nx_logger)
-    2 Docker files to create containers for AWS VM
-      ( Dockerfile_mqtt_base_aws, Dockerfile_aws_save)
+      (Docker_chess_camera, Dockerfile_mqtt_nx_broker, Dockerfile_yolov5_chess)  
+    2 Docker files to create containers for AWS VM  
+      ( docker_chess_reinf)  
+    note: docker_chess_reinf is used for tensorflow based reinforcemnt learning. Final implementation uses pytorch based and have been directly trained on the VM.  
 
-    kube Folder:
-    1 Kuberenetes YAML file for NX device  (hw3_k3s_nx.yaml)
-    2.Kubenertes YAML file for AWS (hw3_aws.yaml - Not tested fully)
+    kube Folder:  
+    1 Kuberenetes YAML file for NX device  (chess_final.yaml)
+    note: didn't use kubernetes in the cloud
 
-    pyfiles folder:
+    Python files (on the main folder)
     On Jetson NX
-     1. readFromCamera.py - Read image from camera and identify face and send byte stream to MQTT broker
-     2. msg_forward.py - subscribe to MQTT for topic published by readFromCamera.py and forward it to remote aws MQTT broker
-     3. nx_logger.py - Log messages to log folder on NX device  
-       
+     1. readFromCamera.py - Read image from camera and send frame to MQTT broker when person presses key 's'  
+     2. chess_board_detect_api.py - subscribe to MQTT for topic published by readFromCamera.py and integrates with Yolo Model and RL model  
+     3. detect_chess.py - takes in the frame and sends it to trained yolo model for Chess board and pieces identification and returns FEN notation of Chessboard
+     4. rl_model_generate_legalMoves.py - takes in board with chess pieces and generates requested number of legal moves. It returns id of next action, which can be converted using chess environment defined in gym_chess_env.py
+             
      On AWS VM
      1. msg_aws_save.py - Subscribe to MQTT broker on AWS machine and save the identified face to S3 bucket.
      
