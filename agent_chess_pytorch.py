@@ -25,7 +25,7 @@ from gym_chess_env import ChessBoard_gym
 from gym_chess_env import ChessBoard_gym
 import wandb
 from onecyclelr import OneCycleLR
-
+from torch.distributions import uniform #for custom Batch Norm
 
 # In[2]:
 
@@ -81,52 +81,88 @@ class ReplayMemory(object):
 
 # In[7]:
 
+class CustomBatchNorm(nn.Module):
+
+    def __init__(self, in_size, momentum=0.9, eps = 1e-5):
+        super(CustomBatchNorm, self).__init__()
+        
+        self.momentum = momentum
+        self.insize = in_size
+        self.eps = eps
+        
+        U = uniform.Uniform(torch.tensor([0.0]), torch.tensor([1.0]))
+        self.gamma = nn.Parameter(U.sample(torch.Size([self.insize])).view(self.insize))
+        self.beta = nn.Parameter(torch.zeros(self.insize))
+            
+        self.register_buffer('running_mean', torch.zeros(self.insize))
+        self.register_buffer('running_var', torch.ones(self.insize))
+        
+        self.running_mean.zero_()
+        self.running_var.fill_(1)
+
+    def forward(self, input):
+        
+        X = input
+
+        if len(X.shape) not in (2, 4):
+            raise ValueError("only support dense or 2dconv")
+        
+        # dense layer
+        elif len(X.shape) == 2:
+            if self.training:
+                mean = torch.mean(X, axis=0)
+                variance = torch.mean((X-mean)**2, axis=0)
+                
+                self.running_mean = (self.momentum * self.running_mean) + (1.0-self.momentum) * mean
+                self.running_var = (self.momentum * self.running_var) + (1.0-self.momentum) * (input.shape[0]/(input.shape[0]-1)*variance)
+            
+            else:
+                mean = self.running_mean
+                variance = self.running_var
+                
+            X_hat = (X-mean) * 1.0 /torch.sqrt(variance + self.eps)
+            out = self.gamma * X_hat + self.beta
+  
+				# convolutional layer
+        elif len(X.shape) == 4:
+            if self.training:
+                N, C, H, W = X.shape
+                mean = torch.mean(X, axis = (0, 2, 3))
+                variance = torch.mean((X - mean.reshape((1, C, 1, 1))) ** 2, axis=(0, 2, 3))
+                
+                self.running_mean = (self.momentum * self.running_mean) + (1.0-self.momentum) * mean
+                self.running_var = (self.momentum * self.running_var) + (1.0-self.momentum) * (input.shape[0]/(input.shape[0]-1)*variance)
+            else:
+                mean = self.running_mean
+                var = self.running_var
+                
+            X_hat = (X - mean.reshape((1, C, 1, 1))) * 1.0 / torch.sqrt(variance.reshape((1, C, 1, 1)) + self.eps)
+            out = self.gamma.reshape((1, C, 1, 1)) * X_hat + self.beta.reshape((1, C, 1, 1))
+        
+        return out
 
 class DQN(nn.Module):
 
     def __init__(self, h, w, outputs):
         super(DQN, self).__init__()
-        self.fc1 = nn.DataParallel(nn.Linear(64, 128))
-        self.fc2 = nn.DataParallel(nn.Linear(128, 512))
-        self.fc3 = nn.DataParallel(nn.Linear(512, 256))
-        self.fc4 = nn.DataParallel(nn.Linear(256, 128))
-#         self.bn1 = nn.BatchNorm1d(128)
-#         self.conv1 = nn.Conv1d(16, 16, kernel_size=3, stride=1)
-#         self.bn1 = nn.BatchNorm1d(16)
-#         self.conv2 = nn.Conv1d(16, 32, kernel_size=5, stride=2)
-#         self.bn2 = nn.BatchNorm1d(32)
-#         self.conv3 = nn.Conv1d(32, 16, kernel_size=5, stride=2)
-#         self.bn3 = nn.BatchNorm1d(16)
+        self.fc1 = nn.DataParallel(nn.Linear(64, 128,bias=False))
+        #self.bn1 = CustomBatchNorm(128)
+        self.fc2 = nn.DataParallel(nn.Linear(128, 512,bias=False))
+        #self.bn2 = CustomBatchNorm(512)
+        self.fc3 = nn.DataParallel(nn.Linear(512, 256,bias=False))
+        #self.bn3 = CustomBatchNorm(256)
+        #self.fc4 = nn.DataParallel(nn.Linear(256, 128))
+        self.head = nn.DataParallel(nn.Linear(256, outputs))
 
-#         # Number of Linear input connections depends on output of conv2d layers
-#         # and therefore the input image size, so compute it.
-#         def conv2d_size_out(size, kernel_size = 5, stride = ):
-#             return (size - (kernel_size - 1) - 1) // stride  + 1
-        
-#         def conv1d_size_out(size, kernel_size = 5, stride = 2):
-#             return (size - (kernel_size - 1) - 1) // stride  + 1
-
-#         convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
-#         convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
-#         linear_input_size = convw * convh * 32
-        self.head = nn.DataParallel(nn.Linear(128, outputs))
-
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
-#     def forward(self, x):
-#         x = x.to(device)
-#         x = F.relu(self.conv1(x))
-# #         x = F.relu(self.bn1(self.conv1(x)))
-# #         x = F.relu(self.bn2(self.conv2(x)))
-# #         x = F.relu(self.bn3(self.conv3(x)))
-#         return self.head(x.view(x.size(0), -1))
     def forward(self, x):
         x = x.to(device)
         x = F.relu(self.fc1(x))
-#         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        x = F.relu(self.fc4(x))
+        #x = F.relu(self.bn3(self.fc3(x)))
+        #x = F.relu(self.bn2(self.fc2(x)))
+        #x = F.relu(self.bn3(self.fc3(x)))
+        #x = F.relu(self.fc4(x))
         return self.head(x.view(x.size(0), -1))
 
 
@@ -155,7 +191,7 @@ BATCH_SIZE = 4096
 GAMMA = 0.999
 EPS_START = 1 
 EPS_END = 0.05
-EPS_DECAY = 200
+EPS_DECAY = 500000
 TARGET_UPDATE = 10
 
 
