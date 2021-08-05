@@ -26,7 +26,7 @@ from gym_chess_env import ChessBoard_gym
 import wandb
 from onecyclelr import OneCycleLR
 from torch.distributions import uniform #for custom Batch Norm
-
+from sklearn.preprocessing import MinMaxScaler
 # In[2]:
 
 
@@ -62,6 +62,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
+scaler = MinMaxScaler()
 
 class ReplayMemory(object):
 
@@ -187,7 +188,7 @@ height = 8
 width = 8
 n_actions = env.action_space.n
 # n_actions = 112
-BATCH_SIZE = 4096 
+BATCH_SIZE = 65536 
 GAMMA = 0.999
 EPS_START = 1 
 EPS_END = 0.05
@@ -373,7 +374,7 @@ def optimize_model():
 
 if (__name__ == "__main__"):
 
-    num_episodes = 200 
+    num_episodes = 50 
     steps_done = 0
     observation_space = 64
     episode_durations = []
@@ -391,7 +392,11 @@ if (__name__ == "__main__"):
             prefix="Epoch: [{}]".format(i_episode))
 
         # Initialize the environment and state
-        state = torch.from_numpy(env.reset()).float()
+        state = env.reset()
+        scaler.fit(state)
+        state = scaler.transform(state)
+        state = torch.from_numpy(state).float()
+
         total_loss = 0
         loss = 0
         t=0
@@ -413,6 +418,8 @@ if (__name__ == "__main__"):
             
 
             # Store the transition in memory
+            scaler.fit(next_state)
+            next_state = scaler.transform(next_state)
             next_state = torch.from_numpy(next_state).float()
 
     #         next_state_model_input = np.reshape(next_state, next_state.shape + (1,)) 
